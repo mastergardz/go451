@@ -7,6 +7,7 @@ import QuizPage from './pages/QuizPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import ChecklistPage from './pages/ChecklistPage.jsx'
 import BuildingPage from './pages/BuildingPage.jsx'
+import MediaPage from './pages/MediaPage.jsx'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="building" element={<BuildingPage />} />
           <Route path="checklist" element={<ChecklistPage />} />
+          <Route path="media" element={<MediaPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
