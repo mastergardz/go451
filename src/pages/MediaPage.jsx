@@ -131,11 +131,11 @@ export default function MediaPage() {
                     e.currentTarget.style.boxShadow = shadows.card
                   }}
                 >
-                  <div style={{ width: '100%', height: 200, background: '#F0F4F0', overflow: 'hidden', position: 'relative' }}>
+                  <div style={{ width: '100%', background: '#F0F4F0' }}>
                     <img
                       src={MEDIA_URL + img.name}
                       alt={img.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ width: '100%', height: 'auto', display: 'block' }}
                     />
                   </div>
                   <div style={{ padding: '14px 16px' }}>
