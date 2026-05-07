@@ -242,16 +242,28 @@ function BuildingSVG({ selectedFloor, onFloorClick }) {
               {floorInfo.label}
             </text>
 
-            {/* Subtitle (truncated) */}
-            <text
-              x={(svgW - floorW) / 2 + 14}
-              y={y + 46}
-              fontSize={9}
-              fill={subColor}
-              fontFamily="Sarabun, sans-serif"
-            >
-              {floorInfo.subtitle.length > 34 ? floorInfo.subtitle.slice(0, 32) + '…' : floorInfo.subtitle}
-            </text>
+            {/* Subtitle wrap 2 lines */}
+            {(() => {
+              const s = floorInfo.subtitle
+              const maxLen = 36
+              if (s.length <= maxLen) {
+                return (
+                  <text x={(svgW - floorW) / 2 + 14} y={y + 44} fontSize={9} fill={subColor} fontFamily="Sarabun, sans-serif">
+                    {s}
+                  </text>
+                )
+              }
+              let cut = maxLen
+              for (let i = maxLen; i > 20; i--) {
+                if (s[i] === ' ' || s[i] === '·') { cut = i; break }
+              }
+              return (
+                <text fontSize={9} fill={subColor} fontFamily="Sarabun, sans-serif">
+                  <tspan x={(svgW - floorW) / 2 + 14} y={y + 40}>{s.slice(0, cut).trim()}</tspan>
+                  <tspan x={(svgW - floorW) / 2 + 14} y={y + 51}>{s.slice(cut).trim()}</tspan>
+                </text>
+              )
+            })()}
 
             {/* Recycle Rate badge */}
             <rect
