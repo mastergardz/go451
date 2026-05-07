@@ -200,7 +200,7 @@ export default function HomePage() {
               borderRadius: radius.lg, padding: '14px 22px',
             }}>
               <div style={{ fontSize: 30, fontWeight: 800, color: colors.gold, lineHeight: 1 }}>
-                13<span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>/15</span>
+                13<span style={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>/14</span>
               </div>
               <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: font.sm, marginTop: 4 }}>คะแนนปี 2568</div>
             </div>
