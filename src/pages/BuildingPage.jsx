@@ -406,7 +406,7 @@ export default function BuildingPage() {
               กดที่ชั้นเพื่อดูรายละเอียด
             </div>
             <BuildingSVG selectedFloor={selectedFloor} onFloorClick={setSelectedFloor} />
-            <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
+            <div style={{ marginTop: 16, display: 'flex', flexWrap: 'nowrap', gap: 6, justifyContent: 'center' }}>
               {[5, 4, 3, 2, 1].map(f => (
                 <button key={f} onClick={() => setSelectedFloor(f)} style={{
                   padding: '5px 14px', borderRadius: 20, fontSize: 12,
