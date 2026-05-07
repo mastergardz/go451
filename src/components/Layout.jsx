@@ -19,7 +19,6 @@ const navItems = [
   { path: '/quiz',              label: 'แบบทดสอบ',        icon: '✏️' },
   { path: '/building',          label: 'แผนผังอาคาร',     icon: '🏢' },
   { path: '/dashboard',         label: 'Dashboard',       icon: '📊' },
-  { path: '/checklist',         label: 'Checklist',       icon: '✅' },
   { path: '/media',             label: 'สื่อประชาสัมพันธ์',   icon: '🖼️' },
 ]
 
