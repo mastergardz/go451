@@ -131,7 +131,7 @@ export default function DashboardPage() {
           <StatCard icon="⚖️" value={`${totalWeight} กก.`} label="น้ำหนักขยะสะสม" sublabel="6 เดือน (ต.ค. 67 – มี.ค. 68)" accent={colors.primary} />
           <StatCard icon="♻️" value={`${latestRate}%`} label="อัตรา Recycle สะสม" sublabel={`เป้าหมาย > 45%`} accent={latestRate >= 45 ? colors.primaryMid : colors.gold} />
           <StatCard icon="🏆" value="13/14" label="คะแนนประเมินปี 2568" sublabel="92.9% — ดีมาก" accent={colors.gold} />
-          <StatCard icon="🎯" value="14/14" label="เป้าหมายปี 2569" sublabel="100% — คะแนนเต็ม" accent={colors.accent} />
+          <StatCard icon="🎯" value="15/15" label="เป้าหมายปี 2569" sublabel="100% — คะแนนเต็ม" accent={colors.accent} />
         </div>
 
         {/* ===== ROW 1: Bar chart + Pie chart ===== */}
@@ -249,7 +249,7 @@ export default function DashboardPage() {
             ผลการประเมินหมวดที่ 4 ปี 2568 — รายข้อ
           </h3>
           <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 24 }}>
-            คะแนนรวม: 13/14 (92.9%) · เป้าหมายปี 2569: 14/14 (100%)
+            คะแนนรวม: 13/15 (86.7%) · เป้าหมายปี 2569: 15/15 (100%)
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
