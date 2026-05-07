@@ -142,9 +142,9 @@ function BuildingSVG({ selectedFloor, onFloorClick }) {
   }
 
   const floors = [5, 4, 3, 2, 1]
-  const floorH = 62
-  const floorW = 290
-  const svgW = 340
+  const floorH = 58
+  const floorW = 380
+  const svgW = 430
   const topPad = 16
   const svgH = floors.length * floorH + topPad + 28
 
@@ -241,29 +241,16 @@ function BuildingSVG({ selectedFloor, onFloorClick }) {
             >
               {floorInfo.label}
             </text>
-
-            {/* Subtitle wrap 2 lines */}
-            {(() => {
-              const s = floorInfo.subtitle
-              const maxLen = 36
-              if (s.length <= maxLen) {
-                return (
-                  <text x={(svgW - floorW) / 2 + 14} y={y + 44} fontSize={9} fill={subColor} fontFamily="Sarabun, sans-serif">
-                    {s}
-                  </text>
-                )
-              }
-              let cut = maxLen
-              for (let i = maxLen; i > 20; i--) {
-                if (s[i] === ' ' || s[i] === '·') { cut = i; break }
-              }
-              return (
-                <text fontSize={9} fill={subColor} fontFamily="Sarabun, sans-serif">
-                  <tspan x={(svgW - floorW) / 2 + 14} y={y + 40}>{s.slice(0, cut).trim()}</tspan>
-                  <tspan x={(svgW - floorW) / 2 + 14} y={y + 51}>{s.slice(cut).trim()}</tspan>
-                </text>
-              )
-            })()}
+            {/* Subtitle */}
+            <text
+              x={(svgW - floorW) / 2 + 14}
+              y={y + 46}
+              fontSize={9}
+              fill={subColor}
+              fontFamily="Sarabun, sans-serif"
+            >
+              {floorInfo.subtitle}
+            </text>
 
             {/* Recycle Rate badge */}
             <rect
