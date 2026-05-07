@@ -216,7 +216,7 @@ export default function WasteManagementPage() {
           <SectionTitle
             eyebrow="PEA ECO STANDARD 02/2567"
             title="เกณฑ์การประเมินหมวดที่ 4"
-            subtitle="การจัดการของเสีย (Waste Management) คะแนนเต็ม 14 คะแนน"
+            subtitle="การจัดการของเสีย (Waste Management) คะแนนเต็ม 15 คะแนน"
           />
 
           {/* คะแนนรวม progress */}
@@ -230,12 +230,12 @@ export default function WasteManagementPage() {
                 ผลการประเมินปี 2568 vs เป้าหมายปี 2569
               </span>
               <span style={{ fontWeight: 800, fontSize: font.lg, color: colors.primary }}>
-                13 / 14 คะแนน
+                13 / 15 คะแนน
               </span>
             </div>
             <div style={{ background: '#E8F5E9', borderRadius: radius.pill, height: 12, overflow: 'hidden' }}>
               <div style={{
-                width: `${(13 / 14) * 100}%`, height: '100%',
+                width: `${(13 / 15) * 100}%`, height: '100%',
                 background: `linear-gradient(90deg, ${colors.primary}, ${colors.primaryLight})`,
                 borderRadius: radius.pill,
                 transition: 'width 1s ease',
@@ -245,8 +245,8 @@ export default function WasteManagementPage() {
               display: 'flex', justifyContent: 'space-between', marginTop: 8,
               fontSize: font.sm, color: colors.textSecondary,
             }}>
-              <span>ปี 2568: 13/14 (92.9%)</span>
-              <span style={{ color: colors.accent, fontWeight: 600 }}>🎯 เป้าปี 2569: 14/14 (100%)</span>
+              <span>ปี 2568: 13/15 (86.7%)</span>
+              <span style={{ color: colors.accent, fontWeight: 600 }}>🎯 เป้าปี 2569: 15/15 (100%)</span>
             </div>
           </div>
 

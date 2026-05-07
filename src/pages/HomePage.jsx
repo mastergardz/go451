@@ -126,7 +126,7 @@ function DivisionCard({ div, onClick }) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <span style={{ fontSize: font.sm, color: colors.textSecondary }}>
-            เป้าหมายปี 2569: <strong style={{ color: colors.primary }}>14/14 คะแนนเต็ม</strong>
+            เป้าหมายปี 2569: <strong style={{ color: colors.primary }}>15/15 คะแนนเต็ม</strong>
           </span>
           <span style={{ fontSize: 18 }}>→</span>
         </div>

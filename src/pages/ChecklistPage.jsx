@@ -110,7 +110,7 @@ const checklistGroups = [
     bgColor: '#FBE9E7',
     description: 'ข้อมูลคะแนนจริงปี 2568 เพื่อแสดงใน Dashboard และตั้งเป้าปี 2569',
     items: [
-      { id: 's1', label: 'คะแนนหมวด 4 ปี 2568 แยกรายข้อ (ข้อ 1-6)', note: 'รู้แค่รวม 13/14 — ต้องการว่าขาดข้อไหน' },
+      { id: 's1', label: 'คะแนนหมวด 4 ปี 2568 แยกรายข้อ (ข้อ 1-6)', note: 'รู้แค่รวม 13/15 — ต้องการว่าขาดข้อไหน' },
       { id: 's2', label: 'คะแนนหมวด 1-3 และ 5-6 ปี 2568', note: 'เพื่อแสดงคะแนนรวมทั้ง 90 คะแนน และระดับ ทอง/เงิน/ทองแดง' },
     ],
   },
@@ -201,7 +201,7 @@ export default function ChecklistPage() {
             fontSize: isMobile ? 28 : 42, lineHeight: 1.3, marginBottom: 12,
           }}>
             Checklist<br />
-            <span style={{ color: colors.gold }}>เป้าหมาย 14/14</span>
+            <span style={{ color: colors.gold }}>เป้าหมาย 15/15</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: font.md, maxWidth: 540, lineHeight: 1.6 }}>
             รายการที่ส่งผลต่อการประเมิน PEA Eco Standard โดยตรง — ติ๊กถูกเมื่อได้ข้อมูลแล้ว
