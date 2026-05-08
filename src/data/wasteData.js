@@ -299,6 +299,7 @@ export const wasteTypes = [
 export const floorData69 = {
   1: {
     inspector: 'นายนพดล บุญยรัตกลิน',
+    recorder: 'พิริณาร์ สุรรม',
     months: [
       { month: 'ม.ค. 69', gen: 332.35, rec: 89.45, wet: 55.40, haz: 0, inf: 0, ew: 2.00, a4: 0.00 },
       { month: 'ก.พ. 69', gen: 334.90, rec: 89.90, wet: 100.80, haz: 0, inf: 0, ew: 3.00, a4: 0.00 },
@@ -308,6 +309,7 @@ export const floorData69 = {
   },
   2: {
     inspector: 'นายธปณัฐ ภู่ระหงษ์',
+    recorder: 'อรวรรณ กงแก้ว',
     months: [
       { month: 'ม.ค. 69', gen: 206.24, rec: 70.70, wet: 14.70, haz: 0, inf: 0, ew: 0, a4: 4.90 },
       { month: 'ก.พ. 69', gen: 205.39, rec: 70.55, wet: 14.10, haz: 0, inf: 0, ew: 0, a4: 4.80 },
@@ -317,6 +319,7 @@ export const floorData69 = {
   },
   3: {
     inspector: 'นางสาวสกุณา เชี่ยวชาญชัย',
+    recorder: 'กิตตกุล จันทรวงษ์',
     months: [
       { month: 'ม.ค. 69', gen: 224.50, rec: 69.40, wet: 9.80, haz: 0, inf: 0, ew: 0, a4: 4.90 },
       { month: 'ก.พ. 69', gen: 224.50, rec: 69.40, wet: 9.80, haz: 0, inf: 0, ew: 0, a4: 5.00 },
@@ -326,6 +329,7 @@ export const floorData69 = {
   },
   4: {
     inspector: 'นายรณชัย ชูแก้ว',
+    recorder: 'สุภาวรรณ เทียนกลาง',
     months: [
       { month: 'ม.ค. 69', gen: 207.40, rec: 89.80, wet: 14.50, haz: 0, inf: 0, ew: 0, a4: 7.50 },
       { month: 'ก.พ. 69', gen: 206.55, rec: 89.65, wet: 14.50, haz: 0, inf: 0, ew: 0, a4: 7.40 },
@@ -335,6 +339,7 @@ export const floorData69 = {
   },
   5: {
     inspector: 'นายณัฐฏฐ์ชนาธิป ธิติศักดิ์',
+    recorder: 'มะลิ ปากิน',
     months: [
       { month: 'ม.ค. 69', gen: 232.05, rec: 72.25, wet: 14.20, haz: 0, inf: 0, ew: 0, a4: 5.00 },
       { month: 'ก.พ. 69', gen: 233.75, rec: 72.55, wet: 14.00, haz: 0, inf: 0, ew: 0, a4: 4.90 },

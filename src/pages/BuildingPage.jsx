@@ -83,6 +83,7 @@ function buildFloorData() {
     out[fn] = {
       ...meta,
       inspector: raw.inspector,
+      recorder: raw.recorder,
       months: raw.months,
       latest,
       recycleRate: rr,
@@ -324,6 +325,7 @@ export default function BuildingPage() {
                   <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 3, lineHeight: 1.5 }}>{floor.deptFull}</div>
                   <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
                     <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>📐 {floor.area}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>📋 ผู้บันทึก: {floor.recorder}</span>
                     <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>🔍 ผู้สุ่มตรวจ: {floor.inspector}</span>
                   </div>
                 </div>
@@ -415,7 +417,7 @@ export default function BuildingPage() {
               <div style={{ padding: '16px 20px', borderBottom: '1px solid #E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: floor.bgGrad }}>
                 <div>
                   <div style={{ fontWeight: 800, fontSize: 16, color: '#fff' }}>📋 ข้อมูลรายเดือน — {floor.label}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>🔍 ผู้สุ่มตรวจ: {floor.inspector}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>📋 ผู้บันทึก: {floor.recorder} · 🔍 ผู้สุ่มตรวจ: {floor.inspector}</div>
                 </div>
                 <button onClick={() => setShowRaw(false)} style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: radius.sm, width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
@@ -475,7 +477,7 @@ export default function BuildingPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#F5F5F5' }}>
-                  {['ชั้น', 'ฝ่าย/โซน', 'พื้นที่', 'ขยะรวม (กก.)', 'Recycle (%)', 'ผู้สุ่มตรวจ', 'สถานะ'].map(h => (
+                  {['ชั้น', 'ฝ่าย/โซน', 'พื้นที่', 'ขยะรวม (กก.)', 'Recycle (%)', 'ผู้บันทึก', 'ผู้สุ่มตรวจ', 'สถานะ'].map(h => (
                     <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: '#546E7A', fontWeight: 600, whiteSpace: 'nowrap', borderBottom: '2px solid #E0E0E0' }}>
                       {h}
                     </th>
@@ -496,6 +498,7 @@ export default function BuildingPage() {
                       <td style={{ padding: '10px 12px' }}>
                         <span style={{ fontWeight: 700, color: f.recycleRate >= 45 ? '#43A047' : f.recycleRate >= 38 ? '#FB8C00' : '#E53935' }}>{f.recycleRate}%</span>
                       </td>
+                      <td style={{ padding: '10px 12px', color: '#546E7A', fontSize: 12 }}>{f.recorder}</td>
                       <td style={{ padding: '10px 12px', color: '#546E7A', fontSize: 12 }}>{f.inspector}</td>
                       <td style={{ padding: '10px 12px' }}>
                         <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: f.recycleRate >= 45 ? '#E8F5E9' : '#FFF3E0', color: f.recycleRate >= 45 ? '#2E7D32' : '#E65100' }}>
