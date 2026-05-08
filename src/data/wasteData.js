@@ -293,6 +293,57 @@ export const wasteTypes = [
 
 // ===== ข้อมูลขยะรายเดือนรายชั้น (จากแบบฟอร์มจริง + simulate ส่วนที่ขาด) =====
 // หน่วย: กิโลกรัม (กก.)
+// ===== ข้อมูลขยะรายชั้น ปี 2569 (จาก XLS จริง) =====
+// แหล่งข้อมูล: บันทึกปริมาณขยะ 2569.xls — aggregate รายชั้น ม.ค.-เม.ย. 69
+// สูตร recycle rate: (rec + wet + ew + a4) / total × 100
+export const floorData69 = {
+  1: {
+    inspector: 'นายนพดล บุญยรัตกลิน',
+    months: [
+      { month: 'ม.ค. 69', gen: 332.35, rec: 89.45, wet: 55.40, haz: 0, inf: 0, ew: 2.00, a4: 0.00 },
+      { month: 'ก.พ. 69', gen: 334.90, rec: 89.90, wet: 100.80, haz: 0, inf: 0, ew: 3.00, a4: 0.00 },
+      { month: 'มี.ค. 69', gen: 398.00, rec: 105.00, wet: 63.30, haz: 0, inf: 0, ew: 3.00, a4: 0.00 },
+      { month: 'เม.ย. 69', gen: 361.00, rec: 47.40, wet: 100.50, haz: 0, inf: 0, ew: 2.00, a4: 0.00 },
+    ],
+  },
+  2: {
+    inspector: 'นายธปณัฐ ภู่ระหงษ์',
+    months: [
+      { month: 'ม.ค. 69', gen: 206.24, rec: 70.70, wet: 14.70, haz: 0, inf: 0, ew: 0, a4: 4.90 },
+      { month: 'ก.พ. 69', gen: 205.39, rec: 70.55, wet: 14.10, haz: 0, inf: 0, ew: 0, a4: 4.80 },
+      { month: 'มี.ค. 69', gen: 219.46, rec: 71.38, wet: 15.10, haz: 0, inf: 0, ew: 0, a4: 4.20 },
+      { month: 'เม.ย. 69', gen: 193.40, rec: 35.75, wet: 13.50, haz: 0, inf: 0, ew: 0, a4: 3.70 },
+    ],
+  },
+  3: {
+    inspector: 'นางสาวสกุณา เชี่ยวชาญชัย',
+    months: [
+      { month: 'ม.ค. 69', gen: 224.50, rec: 69.40, wet: 9.80, haz: 0, inf: 0, ew: 0, a4: 4.90 },
+      { month: 'ก.พ. 69', gen: 224.50, rec: 69.40, wet: 9.80, haz: 0, inf: 0, ew: 0, a4: 5.00 },
+      { month: 'มี.ค. 69', gen: 234.24, rec: 74.74, wet: 10.30, haz: 0, inf: 0, ew: 0, a4: 4.50 },
+      { month: 'เม.ย. 69', gen: 224.80, rec: 37.70, wet: 8.80, haz: 0, inf: 0, ew: 0, a4: 3.80 },
+    ],
+  },
+  4: {
+    inspector: 'นายรณชัย ชูแก้ว',
+    months: [
+      { month: 'ม.ค. 69', gen: 207.40, rec: 89.80, wet: 14.50, haz: 0, inf: 0, ew: 0, a4: 7.50 },
+      { month: 'ก.พ. 69', gen: 206.55, rec: 89.65, wet: 14.50, haz: 0, inf: 0, ew: 0, a4: 7.40 },
+      { month: 'มี.ค. 69', gen: 218.01, rec: 92.19, wet: 16.50, haz: 0, inf: 0, ew: 0, a4: 7.20 },
+      { month: 'เม.ย. 69', gen: 200.45, rec: 57.75, wet: 12.50, haz: 0, inf: 0, ew: 0, a4: 5.10 },
+    ],
+  },
+  5: {
+    inspector: 'นายณัฐฏฐ์ชนาธิป ธิติศักดิ์',
+    months: [
+      { month: 'ม.ค. 69', gen: 232.05, rec: 72.25, wet: 14.20, haz: 0, inf: 0, ew: 0, a4: 5.00 },
+      { month: 'ก.พ. 69', gen: 233.75, rec: 72.55, wet: 14.00, haz: 0, inf: 0, ew: 0, a4: 4.90 },
+      { month: 'มี.ค. 69', gen: 243.36, rec: 76.24, wet: 14.80, haz: 0, inf: 0, ew: 0, a4: 4.80 },
+      { month: 'เม.ย. 69', gen: 226.10, rec: 39.80, wet: 12.50, haz: 0, inf: 0, ew: 0, a4: 4.40 },
+    ],
+  },
+}
+
 // แหล่งข้อมูล: แบบฟอร์มบันทึกขยะรายวัน อาคาร 51 ปี 2568-2569
 // estimated = true หมายถึง simulate จาก moving average / pattern ของเดือนใกล้เคียง
 
