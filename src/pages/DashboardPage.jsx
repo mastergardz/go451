@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { colors, radius, font, shadows } from '../theme.js'
-import { monthlyWasteData, scoreHistory, criteria } from '../data/wasteData.js'
+import { scoreHistory, criteria } from '../data/wasteData.js'
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  ResponsiveContainer,
 } from 'recharts'
 
 function useWindowSize() {
@@ -17,41 +17,68 @@ function useWindowSize() {
   return size
 }
 
-// คำนวณ % Reuse/Recycle สะสม
-function calcRecycleRate(data) {
-  let totalAll = 0, totalRecycle = 0
-  return data.map(d => {
-    totalAll += d.general + d.recycle + d.wet + d.hazardous + d.infectious + d.ewaste
-    totalRecycle += d.recycle
+// ===== ข้อมูลขยะปี 2569 จาก XLS (sheet คำนวณ% ปี 69 (4)) =====
+const wasteData69 = [
+  { month: 'ม.ค. 69', general: 1202.54, hazardous: 0, infectious: 0, recycle: 413.91, wet: 108.60, ewaste: 2.0, total: 1727.05, pctRecycle: 30.4 },
+  { month: 'ก.พ. 69', general: 1205.09, hazardous: 0, infectious: 0, recycle: 414.16, wet: 153.20, ewaste: 3.0, total: 1775.45, pctRecycle: 32.1 },
+  { month: 'มี.ค. 69', general: 1313.06, hazardous: 0, infectious: 0, recycle: 440.25, wet: 120.00, ewaste: 3.0, total: 1876.31, pctRecycle: 30.0 },
+  { month: 'เม.ย. 69', general: 1205.75, hazardous: 0, infectious: 0, recycle: 390.50, wet: 147.80, ewaste: 2.0, total: 1746.05, pctRecycle: 30.9 },
+]
+
+// % Recycle สะสม
+const recycleAccum = (() => {
+  let sumRecycle = 0, sumWet = 0, sumTotal = 0
+  return wasteData69.map(d => {
+    sumRecycle += d.recycle
+    sumWet += d.wet
+    sumTotal += d.total
     return {
       month: d.month,
-      rate: totalAll > 0 ? +((totalRecycle / totalAll) * 100).toFixed(1) : 0,
+      rate: +((( sumRecycle + sumWet) / sumTotal) * 100).toFixed(1),
     }
   })
+})()
+
+// ===== ข้อมูลน้ำเสีย Lab Report 4 เดือน =====
+const waterData = [
+  { month: 'ม.ค. 69', pH: 7.7, BOD: 46,  TSS: 22, TDS: 424, OilGrease: 4,   TKN: 44,  Sulfide: 0.10 },
+  { month: 'ก.พ. 69', pH: 6.2, BOD: 91,  TSS: 40, TDS: 492, OilGrease: 4,   TKN: 111, Sulfide: 0.10 },
+  { month: 'มี.ค. 69', pH: 8.1, BOD: 74,  TSS: 18, TDS: 500, OilGrease: 2,   TKN: 102, Sulfide: 0.10 },
+  { month: 'เม.ย. 69', pH: 8.0, BOD: 66,  TSS: 18, TDS: 464, OilGrease: 2,   TKN: 41,  Sulfide: 0.10 },
+]
+
+const waterStandards = {
+  pH:        { label: 'pH',                   unit: '',      min: 5.5,  max: 9.0,   higherIsBad: false, isRange: true },
+  BOD:       { label: 'BOD',                  unit: 'mg/L',  max: 30,   higherIsBad: true  },
+  TSS:       { label: 'TSS (ของแข็งแขวนลอย)', unit: 'mg/L',  max: 40,   higherIsBad: true  },
+  TDS:       { label: 'TDS (ของแข็งละลาย)',   unit: 'mg/L',  max: 1000, higherIsBad: true  },
+  OilGrease: { label: 'น้ำมันและไขมัน',       unit: 'mg/L',  max: 20,   higherIsBad: true  },
+  TKN:       { label: 'TKN (ไนโตรเจน)',       unit: 'mg/L',  max: 35,   higherIsBad: true  },
+  Sulfide:   { label: 'ซัลไฟด์',              unit: 'mg/L',  max: 1.0,  higherIsBad: true  },
+}
+
+function isPass(key, val) {
+  const s = waterStandards[key]
+  if (!s) return true
+  if (s.isRange) return val >= s.min && val <= s.max
+  return val <= s.max
 }
 
 const WASTE_COLORS = {
-  general:    '#1565C0',  // น้ำเงิน — ขยะทั่วไป (สากล)
-  recycle:    '#F9A825',  // เหลือง — รีไซเคิล (สากล)
-  wet:        '#388E3C',  // เขียว — เปียก/อินทรีย์ (สากล)
-  hazardous:  '#C62828',  // แดง — อันตราย (สากล)
-  infectious: '#FF6F00',  // ส้มเข้ม — ติดเชื้อ
-  ewaste:     '#6A1B9A',  // ม่วง — E-Waste
+  general: '#1565C0', recycle: '#F9A825', wet: '#388E3C',
+  hazardous: '#C62828', infectious: '#FF6F00', ewaste: '#6A1B9A',
 }
-
 const WASTE_LABELS = {
   general: 'ทั่วไป', recycle: 'รีไซเคิล', wet: 'เปียก',
   hazardous: 'อันตราย', infectious: 'ติดเชื้อ', ewaste: 'E-Waste',
 }
 
-function StatCard({ icon, value, label, sublabel, accent, bg }) {
+function StatCard({ icon, value, label, sublabel, accent }) {
   return (
     <div style={{
-      background: bg || colors.surface,
-      border: `1px solid ${accent}33`,
+      background: colors.surface, border: `1px solid ${accent}33`,
       borderRadius: radius.lg, padding: '20px 22px',
-      boxShadow: shadows.card,
-      borderTop: `3px solid ${accent}`,
+      boxShadow: shadows.card, borderTop: `3px solid ${accent}`,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -65,29 +92,261 @@ function StatCard({ icon, value, label, sublabel, accent, bg }) {
   )
 }
 
-const customTooltipStyle = {
+const tooltipStyle = {
   background: colors.surface, border: `1px solid ${colors.border}`,
   borderRadius: radius.md, padding: '10px 14px',
   fontSize: font.sm, fontFamily: 'Sarabun, sans-serif',
   boxShadow: shadows.card,
 }
 
+// ===== TAB WASTE =====
+function TabWaste({ isMobile }) {
+  const latestRate = recycleAccum[recycleAccum.length - 1]?.rate || 0
+  const totalWeight = wasteData69.reduce((s, d) => s + d.total, 0).toFixed(1)
+
+  return (
+    <div>
+      {/* Stat Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)',
+        gap: 16, marginBottom: 32,
+      }}>
+        <StatCard icon="⚖️" value={`${totalWeight} กก.`} label="น้ำหนักขยะสะสม" sublabel="4 เดือน (ม.ค.–เม.ย. 69)" accent={colors.primary} />
+        <StatCard icon="♻️" value={`${latestRate}%`} label="อัตรา Recycle สะสม" sublabel="เป้าหมาย ≥ 45%" accent={latestRate >= 45 ? colors.primaryMid : colors.gold} />
+        <StatCard icon="🏆" value="13/14" label="คะแนนปี 2568" sublabel="92.9% — ดีมาก" accent={colors.gold} />
+        <StatCard icon="🎯" value="15/15" label="เป้าหมายปี 2569" sublabel="100% — คะแนนเต็ม" accent={colors.accent} />
+      </div>
+
+      {/* Bar chart */}
+      <div style={{
+        background: colors.surface, border: `1px solid ${colors.border}`,
+        borderRadius: radius.lg, padding: 24, boxShadow: shadows.card, marginBottom: 24,
+      }}>
+        <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>น้ำหนักขยะรายเดือน แยกประเภท</h3>
+        <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 20 }}>หน่วย: กิโลกรัม</p>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={wasteData69} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: 'Sarabun' }} />
+            <YAxis tick={{ fontSize: 12, fontFamily: 'Sarabun' }} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [`${v} กก.`, WASTE_LABELS[n] || n]} />
+            <Legend formatter={v => WASTE_LABELS[v] || v} wrapperStyle={{ fontSize: 12, fontFamily: 'Sarabun' }} />
+            <Bar dataKey="general"    stackId="a" fill={WASTE_COLORS.general} />
+            <Bar dataKey="recycle"    stackId="a" fill={WASTE_COLORS.recycle} />
+            <Bar dataKey="wet"        stackId="a" fill={WASTE_COLORS.wet} />
+            <Bar dataKey="hazardous"  stackId="a" fill={WASTE_COLORS.hazardous} />
+            <Bar dataKey="infectious" stackId="a" fill={WASTE_COLORS.infectious} />
+            <Bar dataKey="ewaste"     stackId="a" fill={WASTE_COLORS.ewaste} radius={[4,4,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Recycle rate line */}
+      <div style={{
+        background: colors.surface, border: `1px solid ${colors.border}`,
+        borderRadius: radius.lg, padding: 24, boxShadow: shadows.card, marginBottom: 24,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          <div>
+            <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>อัตรา Recycle สะสม (%)</h3>
+            <p style={{ fontSize: font.sm, color: colors.textSecondary }}>สูตร: (รีไซเคิล + เปียก) ÷ ขยะทั้งหมด × 100</p>
+          </div>
+          <div style={{
+            background: latestRate >= 45 ? colors.primaryPale : '#FFF8E1',
+            border: `1px solid ${latestRate >= 45 ? colors.primaryMid : colors.gold}55`,
+            borderRadius: radius.md, padding: '8px 16px',
+            fontSize: font.sm, fontWeight: 600,
+            color: latestRate >= 45 ? colors.primary : '#795548',
+          }}>
+            {latestRate >= 45 ? '✅' : '⚠️'} ล่าสุด: {latestRate}% {latestRate >= 45 ? '(ผ่านเกณฑ์)' : '(เป้า ≥ 45%)'}
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <LineChart data={recycleAccum} margin={{ top: 0, right: 16, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: 'Sarabun' }} />
+            <YAxis domain={[0, 55]} tick={{ fontSize: 12, fontFamily: 'Sarabun' }} unit="%" />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, 'อัตรา Recycle']} />
+            <Line type="monotone" dataKey={() => 45} stroke={colors.gold} strokeWidth={2} strokeDasharray="6 4" dot={false} name="เป้าหมาย 45%" />
+            <Line type="monotone" dataKey="rate" stroke={colors.primaryMid} strokeWidth={3} dot={{ fill: colors.primary, r: 5 }} name="Recycle สะสม" />
+            <Legend wrapperStyle={{ fontSize: 12, fontFamily: 'Sarabun' }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* คะแนน breakdown */}
+      <div style={{
+        background: colors.surface, border: `1px solid ${colors.border}`,
+        borderRadius: radius.lg, padding: 24, boxShadow: shadows.card,
+      }}>
+        <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>ผลการประเมินหมวดที่ 4 ปี 2568 — รายข้อ</h3>
+        <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 24 }}>คะแนนรวม: 13/15 (86.7%) · เป้าหมายปี 2569: 15/15 (100%)</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {scoreHistory.breakdown.map(item => {
+            const pct = (item.score / item.max) * 100
+            const c = criteria.find(c => c.id === item.id)
+            return (
+              <div key={item.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 16 }}>{c?.icon}</span>
+                    <span style={{ fontSize: font.sm, fontWeight: 600, color: colors.textPrimary }}>ข้อ {item.id}: {item.title}</span>
+                    {item.gap && (
+                      <span style={{ background: '#FFF3E0', color: '#E65100', border: '1px solid #FFB74D', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: radius.pill }}>ต้องปรับปรุง</span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: font.sm, fontWeight: 700, color: item.gap ? colors.gold : colors.primary }}>{item.score}/{item.max}</span>
+                </div>
+                <div style={{ background: '#F5F5F5', borderRadius: radius.pill, height: 10, overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${pct}%`, height: '100%',
+                    background: item.gap
+                      ? `linear-gradient(90deg, ${colors.gold}, #FFB300)`
+                      : `linear-gradient(90deg, ${colors.primary}, ${colors.primaryLight})`,
+                    borderRadius: radius.pill,
+                  }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div style={{ marginTop: 24, padding: '14px 18px', background: '#FFF8E1', border: `1px solid ${colors.gold}55`, borderRadius: radius.md, fontSize: font.sm, color: '#795548' }}>
+          <strong>⚠️ ช่องว่างปี 2568:</strong> {scoreHistory.gapNote}<br />
+          <strong style={{ color: colors.primary }}>🎯 แผนปี 2569:</strong> ประสานหมวดที่ 2 เพิ่มช่องทางและความถี่การประชาสัมพันธ์ ใช้เว็บไซต์นี้เป็นเครื่องมือสร้างความเข้าใจให้พนักงาน
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ===== TAB WATER =====
+function TabWater({ isMobile }) {
+  const latest = waterData[waterData.length - 1]
+  const latestMonth = latest.month
+
+  const paramKeys = ['pH', 'BOD', 'TSS', 'TDS', 'OilGrease', 'TKN', 'Sulfide']
+  const passCount = paramKeys.filter(k => isPass(k, latest[k])).length
+  const allPass = passCount === paramKeys.length
+
+  return (
+    <div>
+      {/* Summary cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)',
+        gap: 16, marginBottom: 32,
+      }}>
+        <StatCard icon="🧪" value={`${passCount}/${paramKeys.length}`} label="ผ่านเกณฑ์ล่าสุด" sublabel={latestMonth} accent={allPass ? colors.primary : '#C62828'} />
+        <StatCard icon="📋" value="4 เดือน" label="รายงาน Lab" sublabel="ม.ค.–เม.ย. 2569" accent={colors.accent} />
+        <StatCard icon={latest.BOD <= 30 ? '✅' : '❌'} value={`${latest.BOD}`} label="BOD ล่าสุด (mg/L)" sublabel="เกณฑ์ ≤ 30" accent={latest.BOD <= 30 ? colors.primary : '#C62828'} />
+        <StatCard icon={latest.TKN <= 35 ? '✅' : '❌'} value={`${latest.TKN}`} label="TKN ล่าสุด (mg/L)" sublabel="เกณฑ์ ≤ 35" accent={latest.TKN <= 35 ? colors.primary : '#C62828'} />
+      </div>
+
+      {/* ตารางสถานะรายเดือน */}
+      <div style={{
+        background: colors.surface, border: `1px solid ${colors.border}`,
+        borderRadius: radius.lg, padding: 24, boxShadow: shadows.card, marginBottom: 24,
+        overflowX: 'auto',
+      }}>
+        <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>ผลการตรวจวัดคุณภาพน้ำเสีย — รายเดือน</h3>
+        <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 20 }}>เปรียบเทียบกับมาตรฐานน้ำทิ้ง (WC 0035)</p>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: font.sm, minWidth: 600 }}>
+          <thead>
+            <tr style={{ background: '#F5F5F5' }}>
+              <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: colors.textPrimary, borderBottom: `2px solid ${colors.border}` }}>พารามิเตอร์</th>
+              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: colors.textSecondary, borderBottom: `2px solid ${colors.border}` }}>เกณฑ์</th>
+              {waterData.map(d => (
+                <th key={d.month} style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: colors.textPrimary, borderBottom: `2px solid ${colors.border}` }}>{d.month}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {paramKeys.map((key, i) => {
+              const s = waterStandards[key]
+              const stdLabel = s.isRange ? `${s.min}–${s.max}` : `≤ ${s.max}`
+              return (
+                <tr key={key} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: 600, color: colors.textPrimary, borderBottom: `1px solid ${colors.border}` }}>
+                    {s.label} {s.unit ? <span style={{ color: colors.textSecondary, fontWeight: 400 }}>({s.unit})</span> : ''}
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', color: colors.textSecondary, borderBottom: `1px solid ${colors.border}` }}>{stdLabel}</td>
+                  {waterData.map(d => {
+                    const val = d[key]
+                    const pass = isPass(key, val)
+                    return (
+                      <td key={d.month} style={{ padding: '10px 12px', textAlign: 'center', borderBottom: `1px solid ${colors.border}` }}>
+                        <span style={{
+                          display: 'inline-block', padding: '3px 10px', borderRadius: radius.pill,
+                          fontWeight: 700, fontSize: font.sm,
+                          background: pass ? '#E8F5E9' : '#FFEBEE',
+                          color: pass ? '#2E7D32' : '#C62828',
+                        }}>
+                          {val < 0.11 && key === 'Sulfide' ? '<0.10' : val}
+                        </span>
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* BOD + TKN chart */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+        gap: 24, marginBottom: 24,
+      }}>
+        {[
+          { key: 'BOD', label: 'BOD', max: 30, color: '#1565C0' },
+          { key: 'TKN', label: 'TKN (ไนโตรเจน)', max: 35, color: '#6A1B9A' },
+        ].map(({ key, label, max, color }) => (
+          <div key={key} style={{ background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: 24, boxShadow: shadows.card }}>
+            <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>{label} (mg/L)</h3>
+            <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 16 }}>เกณฑ์มาตรฐาน ≤ {max} mg/L</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={waterData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: 'Sarabun' }} />
+                <YAxis tick={{ fontSize: 11, fontFamily: 'Sarabun' }} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} mg/L`, label]} />
+                <Bar dataKey={key} fill={color} radius={[4,4,0,0]}>
+                </Bar>
+                <Line type="monotone" dataKey={() => max} stroke={colors.gold} strokeWidth={2} strokeDasharray="6 3" dot={false} name={`เกณฑ์ ${max}`} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div style={{ marginTop: 8, fontSize: font.xs, color: '#C62828', fontWeight: 600 }}>
+              ⚠️ เกินเกณฑ์ทุกเดือน — ต้องปรับปรุงระบบบำบัดน้ำเสีย
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Note */}
+      <div style={{
+        padding: '14px 18px', background: '#FFEBEE', border: '1px solid #EF9A9A',
+        borderRadius: radius.md, fontSize: font.sm, color: '#B71C1C',
+      }}>
+        <strong>⚠️ สรุปผลการตรวจ:</strong> BOD และ TKN เกินเกณฑ์มาตรฐานทุกเดือน (ม.ค.–เม.ย. 2569)
+        — แนะนำเร่งตรวจสอบและปรับปรุงระบบบำบัดน้ำเสียก่อนการประเมิน
+      </div>
+    </div>
+  )
+}
+
+// ===== MAIN DASHBOARD =====
 export default function DashboardPage() {
   const { w } = useWindowSize()
   const isMobile = w < 640
-  const isTablet = w >= 640 && w < 1024
+  const [activeTab, setActiveTab] = useState('waste')
 
-  const recycleRates = calcRecycleRate(monthlyWasteData)
-  const latestRate = recycleRates[recycleRates.length - 1]?.rate || 0
-
-  // รวมน้ำหนักทั้งหมดแต่ละประเภท
-  const totalByType = ['general', 'recycle', 'wet', 'hazardous', 'infectious', 'ewaste'].map(key => ({
-    name: WASTE_LABELS[key],
-    value: +monthlyWasteData.reduce((s, d) => s + d[key], 0).toFixed(1),
-    color: WASTE_COLORS[key],
-  }))
-
-  const totalWeight = totalByType.reduce((s, d) => s + d.value, 0).toFixed(1)
+  const tabs = [
+    { id: 'waste', label: '♻️ ปริมาณขยะ' },
+    { id: 'water', label: '💧 คุณภาพน้ำเสีย' },
+  ]
 
   return (
     <div>
@@ -97,219 +356,51 @@ export default function DashboardPage() {
         padding: isMobile ? '48px 20px' : '64px 32px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: `radial-gradient(circle at 75% 50%, ${colors.accent}33 0%, transparent 55%)`,
-        }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(circle at 75% 50%, ${colors.accent}33 0%, transparent 55%)` }} />
         <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             background: 'rgba(78,24,135,0.4)', border: `1px solid ${colors.accent}55`,
             color: '#CE93D8', padding: '5px 14px', borderRadius: radius.pill,
             fontSize: font.sm, fontWeight: 600, marginBottom: 16,
-          }}>📊 Dashboard · ข้อมูลการจัดการขยะ</div>
-          <h1 style={{
-            color: '#fff', fontWeight: 800, fontSize: isMobile ? 28 : 42, lineHeight: 1.3, marginBottom: 12,
-          }}>
-            ข้อมูลขยะ<br />
-            <span style={{ color: '#81C784' }}>หมวดที่ 4 อาคาร 51</span>
+          }}>📊 Dashboard · ข้อมูลการจัดการขยะและน้ำเสีย</div>
+          <h1 style={{ color: '#fff', fontWeight: 800, fontSize: isMobile ? 28 : 42, lineHeight: 1.3, marginBottom: 12 }}>
+            ข้อมูลหมวดที่ 4<br />
+            <span style={{ color: '#81C784' }}>อาคาร 51 ปี 2569</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: font.md, maxWidth: 500, lineHeight: 1.6 }}>
-            รายงานผลการจัดการขยะประจำปี 2568 และผลการประเมิน PEA Eco Standard
+            ติดตามผลปริมาณขยะและคุณภาพน้ำเสีย เพื่อการประเมิน PEA Eco Standard
           </p>
         </div>
       </section>
 
+      {/* TABS */}
+      <div style={{ background: colors.surface, borderBottom: `1px solid ${colors.border}`, position: 'sticky', top: 64, zIndex: 50 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0 }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '16px 28px',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: activeTab === tab.id ? `3px solid ${colors.primary}` : '3px solid transparent',
+                color: activeTab === tab.id ? colors.primary : colors.textSecondary,
+                fontFamily: 'Sarabun, sans-serif',
+                fontSize: font.md, fontWeight: activeTab === tab.id ? 700 : 400,
+                cursor: 'pointer', transition: 'all 0.15s',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* CONTENT */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '32px 20px' : '48px 32px' }}>
-
-        {/* ===== STAT CARDS ===== */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)',
-          gap: 16, marginBottom: 36,
-        }}>
-          <StatCard icon="⚖️" value={`${totalWeight} กก.`} label="น้ำหนักขยะสะสม" sublabel="6 เดือน (ต.ค. 67 – มี.ค. 68)" accent={colors.primary} />
-          <StatCard icon="♻️" value={`${latestRate}%`} label="อัตรา Recycle สะสม" sublabel={`เป้าหมาย > 45%`} accent={latestRate >= 45 ? colors.primaryMid : colors.gold} />
-          <StatCard icon="🏆" value="13/14" label="คะแนนประเมินปี 2568" sublabel="92.9% — ดีมาก" accent={colors.gold} />
-          <StatCard icon="🎯" value="15/15" label="เป้าหมายปี 2569" sublabel="100% — คะแนนเต็ม" accent={colors.accent} />
-        </div>
-
-        {/* ===== ROW 1: Bar chart + Pie chart ===== */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr' : '2fr 1fr',
-          gap: 24, marginBottom: 24,
-        }}>
-          {/* Bar chart */}
-          <div style={{
-            background: colors.surface, border: `1px solid ${colors.border}`,
-            borderRadius: radius.lg, padding: '24px', boxShadow: shadows.card,
-          }}>
-            <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>
-              น้ำหนักขยะรายเดือน แยกประเภท
-            </h3>
-            <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 20 }}>หน่วย: กิโลกรัม</p>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthlyWasteData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: 'Sarabun' }} />
-                <YAxis tick={{ fontSize: 12, fontFamily: 'Sarabun' }} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(v, n) => [`${v} กก.`, WASTE_LABELS[n] || n]} />
-                <Legend formatter={v => WASTE_LABELS[v] || v} wrapperStyle={{ fontSize: 12, fontFamily: 'Sarabun' }} />
-                <Bar dataKey="general" stackId="a" fill={WASTE_COLORS.general} />
-                <Bar dataKey="recycle" stackId="a" fill={WASTE_COLORS.recycle} />
-                <Bar dataKey="wet" stackId="a" fill={WASTE_COLORS.wet} />
-                <Bar dataKey="hazardous" stackId="a" fill={WASTE_COLORS.hazardous} />
-                <Bar dataKey="infectious" stackId="a" fill={WASTE_COLORS.infectious} />
-                <Bar dataKey="ewaste" stackId="a" fill={WASTE_COLORS.ewaste} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Pie chart */}
-          <div style={{
-            background: colors.surface, border: `1px solid ${colors.border}`,
-            borderRadius: radius.lg, padding: '24px', boxShadow: shadows.card,
-          }}>
-            <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>
-              สัดส่วนขยะแต่ละประเภท
-            </h3>
-            <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 12 }}>รวมสะสม 6 เดือน</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={totalByType} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
-                  dataKey="value" nameKey="name" paddingAngle={3}>
-                  {totalByType.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={customTooltipStyle} formatter={(v) => [`${v} กก.`]} />
-              </PieChart>
-            </ResponsiveContainer>
-            {/* Legend */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {totalByType.map(t => (
-                <div key={t.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: t.color }} />
-                    <span style={{ fontSize: font.sm, color: colors.textSecondary }}>{t.name}</span>
-                  </div>
-                  <span style={{ fontSize: font.sm, fontWeight: 600, color: colors.textPrimary }}>{t.value} กก.</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ===== ROW 2: Recycle rate line chart ===== */}
-        <div style={{
-          background: colors.surface, border: `1px solid ${colors.border}`,
-          borderRadius: radius.lg, padding: '24px', boxShadow: shadows.card,
-          marginBottom: 24,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-            <div>
-              <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>
-                อัตรา Recycle สะสม (%)
-              </h3>
-              <p style={{ fontSize: font.sm, color: colors.textSecondary }}>
-                สูตร: (ขยะรีไซเคิลสะสม ÷ ขยะทั้งหมดสะสม) × 100
-              </p>
-            </div>
-            <div style={{
-              background: latestRate >= 45 ? colors.primaryPale : '#FFF8E1',
-              border: `1px solid ${latestRate >= 45 ? colors.primaryMid : colors.gold}55`,
-              borderRadius: radius.md, padding: '8px 16px',
-              fontSize: font.sm, fontWeight: 600,
-              color: latestRate >= 45 ? colors.primary : '#795548',
-            }}>
-              {latestRate >= 45 ? '✅' : '⚠️'} ล่าสุด: {latestRate}% {latestRate >= 45 ? '(ผ่านเกณฑ์ 45%)' : '(เป้า > 45%)'}
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={recycleRates} margin={{ top: 0, right: 16, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: 'Sarabun' }} />
-              <YAxis domain={[0, 55]} tick={{ fontSize: 12, fontFamily: 'Sarabun' }} unit="%" />
-              <Tooltip contentStyle={customTooltipStyle} formatter={(v) => [`${v}%`, 'อัตรา Recycle']} />
-              {/* เส้นเป้าหมาย 45% */}
-              <Line type="monotone" dataKey={() => 45} stroke={colors.gold} strokeWidth={2} strokeDasharray="6 4" dot={false} name="เป้าหมาย 45%" />
-              <Line type="monotone" dataKey="rate" stroke={colors.primaryMid} strokeWidth={3} dot={{ fill: colors.primary, r: 5 }} name="อัตรา Recycle สะสม" />
-              <Legend wrapperStyle={{ fontSize: 12, fontFamily: 'Sarabun' }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* ===== ROW 3: คะแนนประเมิน ===== */}
-        <div style={{
-          background: colors.surface, border: `1px solid ${colors.border}`,
-          borderRadius: radius.lg, padding: '24px', boxShadow: shadows.card,
-        }}>
-          <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>
-            ผลการประเมินหมวดที่ 4 ปี 2568 — รายข้อ
-          </h3>
-          <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 24 }}>
-            คะแนนรวม: 13/15 (86.7%) · เป้าหมายปี 2569: 15/15 (100%)
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {scoreHistory.breakdown.map(item => {
-              const pct = (item.score / item.max) * 100
-              const c = criteria.find(c => c.id === item.id)
-              return (
-                <div key={item.id}>
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    marginBottom: 6, flexWrap: 'wrap', gap: 4,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 16 }}>{c?.icon}</span>
-                      <span style={{ fontSize: font.sm, fontWeight: 600, color: colors.textPrimary }}>
-                        ข้อ {item.id}: {item.title}
-                      </span>
-                      {item.gap && (
-                        <span style={{
-                          background: '#FFF3E0', color: '#E65100',
-                          border: '1px solid #FFB74D',
-                          fontSize: 10, fontWeight: 700,
-                          padding: '2px 8px', borderRadius: radius.pill,
-                        }}>ต้องปรับปรุง</span>
-                      )}
-                    </div>
-                    <span style={{
-                      fontSize: font.sm, fontWeight: 700,
-                      color: item.gap ? colors.gold : colors.primary,
-                    }}>
-                      {item.score}/{item.max}
-                    </span>
-                  </div>
-                  <div style={{ background: '#F5F5F5', borderRadius: radius.pill, height: 10, overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${pct}%`, height: '100%',
-                      background: item.gap
-                        ? `linear-gradient(90deg, ${colors.gold}, #FFB300)`
-                        : `linear-gradient(90deg, ${colors.primary}, ${colors.primaryLight})`,
-                      borderRadius: radius.pill,
-                    }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Gap note */}
-          <div style={{
-            marginTop: 24, padding: '14px 18px',
-            background: '#FFF8E1', border: `1px solid ${colors.gold}55`,
-            borderRadius: radius.md,
-            fontSize: font.sm, color: '#795548',
-          }}>
-            <strong>⚠️ ช่องว่างปี 2568:</strong> {scoreHistory.gapNote}
-            <br />
-            <strong style={{ color: colors.primary }}>🎯 แผนปี 2569:</strong> ประสานหมวดที่ 2 เพิ่มช่องทางและความถี่การประชาสัมพันธ์
-            ใช้เว็บไซต์นี้เป็นเครื่องมือสร้างความเข้าใจให้พนักงาน
-          </div>
-        </div>
+        {activeTab === 'waste' ? <TabWaste isMobile={isMobile} /> : <TabWater isMobile={isMobile} />}
       </div>
     </div>
   )
