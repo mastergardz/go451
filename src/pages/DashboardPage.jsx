@@ -7,6 +7,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
+
+function fmt(n) { return Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 function useWindowSize() {
   const [size, setSize] = useState({ w: window.innerWidth })
   useEffect(() => {
@@ -17,24 +19,23 @@ function useWindowSize() {
   return size
 }
 
-// ===== ข้อมูลขยะปี 2569 จาก XLS (sheet คำนวณ% ปี 69 (4)) =====
+// ===== ข้อมูลขยะปี 2569 จาก XLS (สูตร: recycle+wet+ewaste+A4 / total) =====
 const wasteData69 = [
-  { month: 'ม.ค. 69', general: 1202.54, hazardous: 0, infectious: 0, recycle: 413.91, wet: 108.60, ewaste: 2.0, total: 1727.05, pctRecycle: 30.4 },
-  { month: 'ก.พ. 69', general: 1205.09, hazardous: 0, infectious: 0, recycle: 414.16, wet: 153.20, ewaste: 3.0, total: 1775.45, pctRecycle: 32.1 },
-  { month: 'มี.ค. 69', general: 1313.06, hazardous: 0, infectious: 0, recycle: 440.25, wet: 120.00, ewaste: 3.0, total: 1876.31, pctRecycle: 30.0 },
-  { month: 'เม.ย. 69', general: 1205.75, hazardous: 0, infectious: 0, recycle: 390.50, wet: 147.80, ewaste: 2.0, total: 1746.05, pctRecycle: 30.9 },
+  { month: 'ม.ค. 69', general: 1202.54, hazardous: 0, infectious: 0, recycle: 391.60, wet: 108.60, ewaste: 2.00, a4: 22.30, total: 1727.05 },
+  { month: 'ก.พ. 69', general: 1205.09, hazardous: 0, infectious: 0, recycle: 392.06, wet: 153.20, ewaste: 3.00, a4: 22.10, total: 1775.45 },
+  { month: 'มี.ค. 69', general: 1313.06, hazardous: 0, infectious: 0, recycle: 419.55, wet: 120.00, ewaste: 3.00, a4: 20.70, total: 1876.31 },
+  { month: 'เม.ย. 69', general: 1205.75, hazardous: 0, infectious: 0, recycle: 373.50, wet: 147.80, ewaste: 2.00, a4: 17.00, total: 1746.05 },
 ]
 
-// % Recycle สะสม
+// % นำขยะกลับมาใช้ใหม่ สะสม (สูตรจริง: recycle+wet+ewaste+A4 / total)
 const recycleAccum = (() => {
-  let sumRecycle = 0, sumWet = 0, sumTotal = 0
+  let sumReuse = 0, sumTotal = 0
   return wasteData69.map(d => {
-    sumRecycle += d.recycle
-    sumWet += d.wet
-    sumTotal += d.total
+    sumReuse  += d.recycle + d.wet + d.ewaste + d.a4
+    sumTotal  += d.total
     return {
       month: d.month,
-      rate: +((( sumRecycle + sumWet) / sumTotal) * 100).toFixed(1),
+      rate: +((sumReuse / sumTotal) * 100).toFixed(2),
     }
   })
 })()
@@ -102,7 +103,7 @@ const tooltipStyle = {
 // ===== TAB WASTE =====
 function TabWaste({ isMobile }) {
   const latestRate = recycleAccum[recycleAccum.length - 1]?.rate || 0
-  const totalWeight = wasteData69.reduce((s, d) => s + d.total, 0).toFixed(1)
+  const totalWeight = wasteData69.reduce((s, d) => s + d.total, 0)
 
   return (
     <div>
@@ -112,10 +113,10 @@ function TabWaste({ isMobile }) {
         gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)',
         gap: 16, marginBottom: 32,
       }}>
-        <StatCard icon="⚖️" value={`${totalWeight} กก.`} label="น้ำหนักขยะสะสม" sublabel="4 เดือน (ม.ค.–เม.ย. 69)" accent={colors.primary} />
-        <StatCard icon="♻️" value={`${latestRate}%`} label="อัตรา Recycle สะสม" sublabel="เป้าหมาย ≥ 45%" accent={latestRate >= 45 ? colors.primaryMid : colors.gold} />
-        <StatCard icon="🏆" value="13/14" label="คะแนนปี 2568" sublabel="92.9% — ดีมาก" accent={colors.gold} />
-        <StatCard icon="🎯" value="15/15" label="เป้าหมายปี 2569" sublabel="100% — คะแนนเต็ม" accent={colors.accent} />
+        <StatCard icon="⚖️" value={`${fmt(totalWeight)} กก.`} label="น้ำหนักขยะสะสม" sublabel="4 เดือน (ม.ค.–เม.ย. 69)" accent={colors.primary} />
+        <StatCard icon="♻️" value={`${latestRate.toFixed(2)}%`} label="อัตรา Recycle สะสม" sublabel="เป้าหมาย ≥ 45%" accent={latestRate >= 45 ? colors.primaryMid : colors.gold} />
+        <StatCard icon="🗑️" value={`${fmt(wasteData69.reduce((s,d)=>s+d.general,0))} กก.`} label="ขยะทั่วไป (ฝังกลบ)" sublabel="สะสม 4 เดือน" accent="#1565C0" />
+        <StatCard icon="💻" value={`${fmt(wasteData69.reduce((s,d)=>s+d.ewaste,0))} กก.`} label="E-Waste" sublabel="สะสม 4 เดือน" accent="#6A1B9A" />
       </div>
 
       {/* Bar chart */}
@@ -175,47 +176,7 @@ function TabWaste({ isMobile }) {
         </ResponsiveContainer>
       </div>
 
-      {/* คะแนน breakdown */}
-      <div style={{
-        background: colors.surface, border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg, padding: 24, boxShadow: shadows.card,
-      }}>
-        <h3 style={{ fontWeight: 700, fontSize: font.md, color: colors.textPrimary, marginBottom: 4 }}>ผลการประเมินหมวดที่ 4 ปี 2568 — รายข้อ</h3>
-        <p style={{ fontSize: font.sm, color: colors.textSecondary, marginBottom: 24 }}>คะแนนรวม: 13/15 (86.7%) · เป้าหมายปี 2569: 15/15 (100%)</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {scoreHistory.breakdown.map(item => {
-            const pct = (item.score / item.max) * 100
-            const c = criteria.find(c => c.id === item.id)
-            return (
-              <div key={item.id}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>{c?.icon}</span>
-                    <span style={{ fontSize: font.sm, fontWeight: 600, color: colors.textPrimary }}>ข้อ {item.id}: {item.title}</span>
-                    {item.gap && (
-                      <span style={{ background: '#FFF3E0', color: '#E65100', border: '1px solid #FFB74D', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: radius.pill }}>ต้องปรับปรุง</span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: font.sm, fontWeight: 700, color: item.gap ? colors.gold : colors.primary }}>{item.score}/{item.max}</span>
-                </div>
-                <div style={{ background: '#F5F5F5', borderRadius: radius.pill, height: 10, overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${pct}%`, height: '100%',
-                    background: item.gap
-                      ? `linear-gradient(90deg, ${colors.gold}, #FFB300)`
-                      : `linear-gradient(90deg, ${colors.primary}, ${colors.primaryLight})`,
-                    borderRadius: radius.pill,
-                  }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        <div style={{ marginTop: 24, padding: '14px 18px', background: '#FFF8E1', border: `1px solid ${colors.gold}55`, borderRadius: radius.md, fontSize: font.sm, color: '#795548' }}>
-          <strong>⚠️ ช่องว่างปี 2568:</strong> {scoreHistory.gapNote}<br />
-          <strong style={{ color: colors.primary }}>🎯 แผนปี 2569:</strong> ประสานหมวดที่ 2 เพิ่มช่องทางและความถี่การประชาสัมพันธ์ ใช้เว็บไซต์นี้เป็นเครื่องมือสร้างความเข้าใจให้พนักงาน
-        </div>
-      </div>
+
     </div>
   )
 }
